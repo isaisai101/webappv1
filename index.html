@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Olympiad Attendance</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Olympiad Attendance</h1>
+
+    <div class="card">
+      <h2>Choose Subject & Date</h2>
+      <select id="subjectSelect">
+        <option value="Math">Math</option>
+        <option value="Informatics">Informatics</option>
+        <option value="Physics">Physics</option>
+        <option value="Chemistry">Chemistry</option>
+      </select>
+      <input type="date" id="dateSelect">
+      <button class="btn" onclick="loadAttendance()">Load</button>
+    </div>
+
+    <div id="attendanceSection" class="card" style="display:none;">
+      <h2>Attendance List</h2>
+      <div class="add-student">
+        <input type="text" id="studentName" placeholder="Enter student name">
+        <button class="btn" onclick="addStudent()">Add Student</button>
+      </div>
+
+      <ul id="studentList" class="student-list"></ul>
+
+      <div id="stats" class="stats"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
