@@ -1,35 +1,29 @@
-let currentSubject = "";
-let currentDate = "";
+// Add student globally for the subject
+function addStudent() {
+  const name = document.getElementById("studentName").value;
+  if (!name) return;
 
-// Load selections from LocalStorage
-function loadSelection() {
-  const savedSubject = localStorage.getItem('selectedSubject');
-  const savedDate = localStorage.getItem('selectedDate');
-
-  if (savedSubject) {
-    document.getElementById("subjectSelect").value = savedSubject;
-    currentSubject = savedSubject;
-  }
-  if (savedDate) {
-    document.getElementById("dateSelect").value = savedDate;
-    currentDate = savedDate;
+  // 1. Add to global subject list
+  let globalStudents = JSON.parse(localStorage.getItem(`students_${currentSubject}`)) || [];
+  if (!globalStudents.includes(name)) {
+    globalStudents.push(name);
+    localStorage.setItem(`students_${currentSubject}`, JSON.stringify(globalStudents));
   }
 
-  if (savedSubject && savedDate) loadAttendance();
+  // 2. Ensure attendance entry exists for current date
+  let studentsForDate = JSON.parse(localStorage.getItem(attendanceKey(currentSubject, currentDate))) || [];
+
+  // Only add if not already in today's attendance
+  if (!studentsForDate.some(s => s.name === name)) {
+    studentsForDate.push({ name: name, present: true });
+    localStorage.setItem(attendanceKey(currentSubject, currentDate), JSON.stringify(studentsForDate));
+  }
+
+  document.getElementById("studentName").value = "";
+  loadAttendance();
 }
 
-// Save selections to LocalStorage
-function saveSelection() {
-  localStorage.setItem('selectedSubject', currentSubject);
-  localStorage.setItem('selectedDate', currentDate);
-}
-
-// Generate a unique key for each subject + date
-function attendanceKey(subject, date) {
-  return `attendance_${subject}_${date}`;
-}
-
-// Load attendance from LocalStorage
+// Update loadAttendance to include all global students
 function loadAttendance() {
   currentSubject = document.getElementById("subjectSelect").value;
   currentDate = document.getElementById("dateSelect").value;
@@ -41,7 +35,19 @@ function loadAttendance() {
 
   saveSelection();
 
-  let students = JSON.parse(localStorage.getItem(attendanceKey(currentSubject, currentDate))) || [];
+  // Get global student list
+  let globalStudents = JSON.parse(localStorage.getItem(`students_${currentSubject}`)) || [];
+  // Get attendance for the date
+  let studentsForDate = JSON.parse(localStorage.getItem(attendanceKey(currentSubject, currentDate))) || [];
+
+  // Merge: ensure all global students are in today's attendance
+  globalStudents.forEach(name => {
+    if (!studentsForDate.some(s => s.name === name)) {
+      studentsForDate.push({ name: name, present: true });
+    }
+  });
+
+  localStorage.setItem(attendanceKey(currentSubject, currentDate), JSON.stringify(studentsForDate));
 
   document.getElementById("attendanceSection").style.display = "block";
   const list = document.getElementById("studentList");
@@ -49,7 +55,7 @@ function loadAttendance() {
 
   let presentCount = 0;
 
-  students.forEach((student, index) => {
+  studentsForDate.forEach((student, index) => {
     if (student.present) presentCount++;
 
     const li = document.createElement("li");
@@ -74,37 +80,5 @@ function loadAttendance() {
     list.appendChild(li);
   });
 
-  document.getElementById("stats").innerText = `Total: ${students.length} | Present: ${presentCount}`;
+  document.getElementById("stats").innerText = `Total: ${studentsForDate.length} | Present: ${presentCount}`;
 }
-
-// Add student
-function addStudent() {
-  const name = document.getElementById("studentName").value;
-  if (!name) return;
-
-  let students = JSON.parse(localStorage.getItem(attendanceKey(currentSubject, currentDate))) || [];
-  students.push({ name: name, present: true });
-  localStorage.setItem(attendanceKey(currentSubject, currentDate), JSON.stringify(students));
-
-  document.getElementById("studentName").value = "";
-  loadAttendance();
-}
-
-// Delete student
-function deleteStudent(index) {
-  let students = JSON.parse(localStorage.getItem(attendanceKey(currentSubject, currentDate))) || [];
-  students.splice(index, 1);
-  localStorage.setItem(attendanceKey(currentSubject, currentDate), JSON.stringify(students));
-  loadAttendance();
-}
-
-// Toggle attendance
-function toggleAttendance(index) {
-  let students = JSON.parse(localStorage.getItem(attendanceKey(currentSubject, currentDate))) || [];
-  students[index].present = !students[index].present;
-  localStorage.setItem(attendanceKey(currentSubject, currentDate), JSON.stringify(students));
-  loadAttendance();
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', loadSelection);
